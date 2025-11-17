@@ -22,6 +22,12 @@ import type {
   ToolExecutor,
 } from "./types.js";
 
+const randomSessionId = () => {
+  return Math.random().toString(36).slice(2, 10);
+};
+
+const sessionId = randomSessionId();
+
 export class AgentLoop {
   private options: AgentLoopOptions;
   private context: Context;
@@ -102,16 +108,19 @@ export class AgentLoop {
     if (unprocessedToolCalls.length > 0) {
       const copilotResponseMap = this.context
         .getCopilotResponses(unprocessedToolCalls.map((tc) => tc.toolCallId))
-        .reduce((map, resp) => {
-          const toolCallId = resp.tool.callId;
-          map[toolCallId] = resp;
-          return map;
-        }, {} as Partial<Record<string, CopilotResponse>>);
+        .reduce(
+          (map, resp) => {
+            const toolCallId = resp.tool.callId;
+            map[toolCallId] = resp;
+            return map;
+          },
+          {} as Partial<Record<string, CopilotResponse>>,
+        );
 
       const toolResults = await Promise.all(
         unprocessedToolCalls.map((call) => {
           return this.executeTool(call, copilotResponseMap[call.toolCallId]);
-        })
+        }),
       );
 
       const toolResultParts: ToolResultPart[] = [];
@@ -159,7 +168,13 @@ export class AgentLoop {
       messages: modelMessages,
       tools: this.toolDefs,
       abortSignal: this.options.abortSignal,
-      experimental_telemetry: { isEnabled: true },
+      experimental_telemetry: {
+        isEnabled: true,
+        functionId: "neu-translator-cli",
+        metadata: {
+          sessionId: `cli-${sessionId}`,
+        },
+      },
     });
 
     if (!response.messages.length) {
@@ -230,7 +245,7 @@ export class AgentLoop {
 
   private async executeTool(
     part: ToolCallPart,
-    copilotResponse?: CopilotResponse
+    copilotResponse?: CopilotResponse,
   ): Promise<
     | {
         type: "tool-result-part";
@@ -251,27 +266,43 @@ export class AgentLoop {
       name: part.toolName,
       callId: part.toolCallId,
     };
-    const result = await this.toolExecutors[part.toolName](
-      input,
-      options,
-      copilotResponse
-    );
 
-    if (result.type === "copilot-request") {
-      return result;
-    }
+    try {
+      const result = await this.toolExecutors[part.toolName](
+        input,
+        options,
+        copilotResponse,
+      );
 
-    return {
-      type: "tool-result-part",
-      payload: {
-        type: "tool-result",
-        toolCallId: part.toolCallId,
-        toolName: part.toolName,
-        output: {
-          type: "json",
-          value: result.payload,
+      if (result.type === "copilot-request") {
+        return result;
+      }
+
+      return {
+        type: "tool-result-part",
+        payload: {
+          type: "tool-result",
+          toolCallId: part.toolCallId,
+          toolName: part.toolName,
+          output: {
+            type: "json",
+            value: result.payload,
+          },
         },
-      },
-    };
+      };
+    } catch (error) {
+      return {
+        type: "tool-result-part",
+        payload: {
+          type: "tool-result",
+          toolCallId: part.toolCallId,
+          toolName: part.toolName,
+          output: {
+            type: "error-text",
+            value: String(error),
+          },
+        },
+      };
+    }
   }
 }

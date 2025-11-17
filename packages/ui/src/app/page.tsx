@@ -1,11 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import { CopilotRequestHandler } from "@/components/CopilotRequestHandler";
 import Hello from "@/components/Hello";
 import { MessageList } from "@/components/MessageList";
 import { SessionSidebar } from "@/components/SessionSidebar";
 import { UserInputArea } from "@/components/UserInputArea";
-import { useState } from "react";
 import { useAgent } from "./hooks/use-agent";
 
 const Inner = () => {
@@ -59,7 +59,7 @@ const Inner = () => {
         currentSessionId={selectedSessionId}
         onSelectSession={handleSelectSession}
       />
-      <div className="flex flex-col h-full flex-1">
+      <div className="flex flex-col h-full flex-1 mx-1">
         {messages.length === 0 ? (
           <div className="flex-1">
             <Hello />

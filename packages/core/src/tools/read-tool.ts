@@ -48,7 +48,7 @@ export const readExecutor: ToolExecutor<
     throw new Error(
       `Failed to read file: ${
         error instanceof Error ? error.message : String(error)
-      }`
+      }`,
     );
   }
 };

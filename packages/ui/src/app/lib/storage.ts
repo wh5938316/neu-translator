@@ -1,53 +1,77 @@
 import type { Context } from "core";
 
-type Session = {
+export type Session = {
   id: string;
   messages: Context["messages"];
   copilotResponses: Context["copilotResponses"];
+  createdAt: Date;
+  updatedAt: Date;
 };
 
-const uuid = () => {
-  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
-    const r = (Math.random() * 16) | 0,
-      v = c === "x" ? r : (r & 0x3) | 0x8;
-    return v.toString(16);
-  });
+export type SessionListItem = {
+  id: string;
+  messageCount: number;
+  copilotResponseCount: number;
+  createdAt: Date;
+  updatedAt: Date;
 };
+
+export interface ISessionStorage {
+  create(): Promise<Session>;
+  get(id: string): Promise<Session | null>;
+  update(
+    id: string,
+    data: Partial<Pick<Session, "messages" | "copilotResponses">>,
+  ): Promise<void>;
+  list(): Promise<SessionListItem[]>;
+  delete(id: string): Promise<void>;
+}
 
 export class SessionManager {
-  sessions: Session[] = [];
+  private storage: ISessionStorage;
 
-  createSession() {
-    const session = {
-      id: uuid(),
-      messages: [],
-      copilotResponses: [],
-    };
-
-    this.sessions.push(session);
-
-    return session;
+  constructor(storage: ISessionStorage) {
+    this.storage = storage;
   }
 
-  getSession(id: string) {
-    return this.sessions.find((s) => s.id === id);
+  createSession(): Promise<Session> {
+    return this.storage.create();
   }
 
-  addMessages(id: string, messages: Context["messages"]) {
-    const session = this.getSession(id);
-    if (session) {
-      session.messages.push(...messages);
+  getSession(id: string): Promise<Session | null> {
+    return this.storage.get(id);
+  }
+
+  async addMessages(id: string, messages: Context["messages"]): Promise<void> {
+    const session = await this.storage.get(id);
+    if (!session) {
+      throw new Error(`Session ${id} not found`);
     }
+
+    await this.storage.update(id, {
+      messages: [...session.messages, ...messages],
+    });
   }
 
-  addCopilotResponses(id: string, responses: Context["copilotResponses"]) {
-    const session = this.getSession(id);
-    if (session) {
-      session.copilotResponses.push(...responses);
+  async addCopilotResponses(
+    id: string,
+    responses: Context["copilotResponses"],
+  ): Promise<void> {
+    const session = await this.storage.get(id);
+    if (!session) {
+      throw new Error(`Session ${id} not found`);
     }
+
+    await this.storage.update(id, {
+      copilotResponses: [...session.copilotResponses, ...responses],
+    });
   }
 
-  listSessions() {
-    return this.sessions;
+  listSessions(): Promise<SessionListItem[]> {
+    return this.storage.list();
+  }
+
+  deleteSession(id: string): Promise<void> {
+    return this.storage.delete(id);
   }
 }

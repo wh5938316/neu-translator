@@ -143,7 +143,7 @@ export const useAgent = (initialSessionId?: string) => {
         console.error("Failed to load session:", sessionId);
         return;
       }
-      const data = await response.json();
+      const data = (await response.json()) as any;
       const session = data.session;
 
       sessionIdRef.current = sessionId;
