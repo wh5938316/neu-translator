@@ -1,8 +1,8 @@
 import { readdir, stat } from "node:fs/promises";
 import { join } from "node:path";
 import { tool } from "ai";
+import type { ToolExecutor } from "core";
 import { z } from "zod";
-import type { ToolExecutor } from "../types.js";
 
 const description = `Lists files and directories in a given path. The path parameter must be an absolute path, not a relative path. You can optionally provide an array of glob patterns to ignore with the ignore parameter. You should generally prefer the Glob and Grep tools, if you know which directories to search.`;
 
@@ -10,7 +10,7 @@ const inputSchema = z.object({
   path: z
     .string()
     .describe(
-      "The absolute path to the directory to list (must be absolute, not relative)"
+      "The absolute path to the directory to list (must be absolute, not relative)",
     ),
   ignore: z
     .array(z.string())
@@ -26,7 +26,7 @@ const outputSchema = z.object({
         .enum(["file", "directory"])
         .describe("Whether this is a file or directory"),
       path: z.string().describe("The full path to the entry"),
-    })
+    }),
   ),
 });
 
@@ -40,7 +40,7 @@ export const lsTool = tool({
 export const lsExecutor: ToolExecutor<
   z.infer<typeof inputSchema>,
   z.infer<typeof outputSchema>
-> = async (input, options) => {
+> = async (input) => {
   const { path, ignore = [] } = input;
 
   try {
@@ -57,7 +57,7 @@ export const lsExecutor: ToolExecutor<
             : ("file" as const),
           path: fullPath,
         };
-      })
+      }),
     );
 
     // Filter out ignored patterns if provided
@@ -67,8 +67,8 @@ export const lsExecutor: ToolExecutor<
             (entry) =>
               !ignore.some(
                 (pattern) =>
-                  entry.name.includes(pattern) || entry.path.includes(pattern)
-              )
+                  entry.name.includes(pattern) || entry.path.includes(pattern),
+              ),
           )
         : entries;
 
@@ -80,7 +80,7 @@ export const lsExecutor: ToolExecutor<
     throw new Error(
       `Failed to list directory ${path}: ${
         error instanceof Error ? error.message : String(error)
-      }`
+      }`,
     );
   }
 };

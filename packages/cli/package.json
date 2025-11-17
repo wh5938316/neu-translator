@@ -25,6 +25,11 @@
     "ink": "^6.1.0",
     "js-yaml": "^4.1.0",
     "react": "^19.1.1",
-    "react-shared": "*"
+    "react-shared": "*",
+    "tools-shared": "*"
+  },
+  "peerDependencies": {
+    "ai": "^5.0.57",
+    "zod": "^4.0.16"
   }
 }

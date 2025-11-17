@@ -1,6 +1,19 @@
-import { AgentLoop, type CopilotResponse, Memory } from "core";
+import {
+  AgentLoop,
+  type AgentLoopOptions,
+  type CopilotResponse,
+  Memory,
+} from "core";
 import { createRef, useCallback } from "react";
 import { useAgentStore } from "react-shared";
+import {
+  thinkingExecutor,
+  thinkingTool,
+  translateExecutor,
+  translateTool,
+} from "tools-shared";
+import { lsExecutor, lsTool } from "../tools/ls-tool.js";
+import { readExecutor, readTool } from "../tools/read-tool.js";
 
 const agentLoopRef = createRef<AgentLoop>();
 agentLoopRef.current = null;
@@ -14,13 +27,27 @@ memoryRef.current = new Memory();
 const abortController = createRef<AbortController | null>();
 abortController.current = null;
 
+const toolDefs: AgentLoopOptions["toolDefs"] = {
+  ls: lsTool,
+  read: readTool,
+  translate: translateTool,
+  thinking: thinkingTool,
+};
+
+const toolExecutors: AgentLoopOptions["toolExecutors"] = {
+  ls: lsExecutor,
+  read: readExecutor,
+  translate: translateExecutor,
+  thinking: thinkingExecutor,
+};
+
 export const useAgent = () => {
   const messages = useAgentStore((s) => s.messages);
   const setMessages = useAgentStore((s) => s.setMessages);
 
   const unprocessedToolCalls = useAgentStore((s) => s.unprocessedToolCalls);
   const setUnprocessedToolCalls = useAgentStore(
-    (s) => s.setUnprocessedToolCalls
+    (s) => s.setUnprocessedToolCalls,
   );
 
   const currentActor = useAgentStore((s) => s.currentActor);
@@ -38,6 +65,8 @@ export const useAgent = () => {
       agentLoopRef.current = new AgentLoop({
         abortSignal: abortController.current.signal,
         memory: memoryRef.current!,
+        toolDefs,
+        toolExecutors,
       });
 
       process.addListener("SIGINT", () => {

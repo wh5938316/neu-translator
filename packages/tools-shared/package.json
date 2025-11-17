@@ -1,0 +1,16 @@
+{
+  "name": "tools-shared",
+  "private": true,
+  "type": "module",
+  "version": "1.0.0",
+  "main": "src/index.ts",
+  "module": "src/mod.ts",
+  "license": "MIT",
+  "dependencies": {
+    "core": "*"
+  },
+  "peerDependencies": {
+    "ai": "^5.0.57",
+    "zod": "^4.0.16"
+  }
+}

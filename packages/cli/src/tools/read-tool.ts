@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { tool } from "ai";
+import type { ToolExecutor } from "core";
 import { z } from "zod";
-import type { ToolExecutor } from "../types.js";
 
 const description = `Reads a file from the local filesystem. You can access any file directly by using this tool.
 

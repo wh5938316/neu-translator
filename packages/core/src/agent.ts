@@ -10,10 +10,6 @@ import {
 import { Context } from "./context.js";
 import { models } from "./llm.js";
 import { SYSTEM_WORKFLOW } from "./prompts/system.workflow.js";
-import { lsExecutor, lsTool } from "./tools/ls-tool.js";
-import { readExecutor, readTool } from "./tools/read-tool.js";
-import { thinkingExecutor, thinkingTool } from "./tools/thinking-tool.js";
-import { translateExecutor, translateTool } from "./tools/translate-tool.js";
 import type {
   AgentLoopOptions,
   CopilotRequest,
@@ -37,18 +33,8 @@ export class AgentLoop {
   constructor(options: AgentLoopOptions = {}, messages: ModelMessage[] = []) {
     this.options = options;
     this.context = new Context(messages);
-    this.toolDefs = {
-      translate: translateTool,
-      ls: lsTool,
-      read: readTool,
-      thinking: thinkingTool,
-    };
-    this.toolExecutors = {
-      translate: translateExecutor,
-      ls: lsExecutor,
-      read: readExecutor,
-      thinking: thinkingExecutor,
-    };
+    this.toolDefs = options.toolDefs ?? {};
+    this.toolExecutors = options.toolExecutors ?? {};
   }
 
   public async next(): Promise<{

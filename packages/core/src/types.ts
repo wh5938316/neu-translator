@@ -1,4 +1,4 @@
-import type { JSONValue } from "ai";
+import type { JSONValue, ToolSet } from "ai";
 import type { Memory } from "./memory.js";
 
 export {
@@ -14,6 +14,8 @@ export {
 export type AgentLoopOptions = {
   abortSignal?: AbortSignal;
   memory?: Memory;
+  toolDefs?: ToolSet;
+  toolExecutors?: Record<string, ToolExecutor>;
 };
 
 export type ToolCallOptions = {
@@ -26,7 +28,7 @@ export type NextActor = "user" | "agent";
 export type ToolExecutor<TInput = any, UOutput = JSONValue> = (
   input: TInput,
   options: AgentLoopOptions & ToolCallOptions,
-  copilotResponse?: CopilotResponse
+  copilotResponse?: CopilotResponse,
 ) => Promise<
   | {
       type: "copilot-request";
