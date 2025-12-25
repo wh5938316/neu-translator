@@ -21,6 +21,9 @@
       "suspicious": {
         "noUnknownAtRules": "off",
         "noArrayIndexKey": "off"
+      },
+      "style":{
+        "useImportType": "off"
       }
     },
     "domains": {

@@ -1,4 +1,4 @@
-import { ModelMessage } from "core";
+import type { ModelMessage } from "core";
 import { useMemo } from "react";
 
 export const useTranslationState = (messages: ModelMessage[]) => {
@@ -60,7 +60,7 @@ export const useTranslationState = (messages: ModelMessage[]) => {
               currentTranslation.translated =
                 currentTranslation.translated.replace(
                   src_string,
-                  translatedCalls.get(part.toolCallId)!
+                  translatedCalls.get(part.toolCallId)!,
                 );
             }
           }

@@ -7,11 +7,12 @@ import {
 import { createRef, useCallback } from "react";
 import { useAgentStore } from "react-shared";
 import {
+  createTranslateExecutor,
   thinkingExecutor,
   thinkingTool,
-  translateExecutor,
   translateTool,
 } from "tools-shared";
+import { translateState } from "../lib/translate-state.js";
 import { lsExecutor, lsTool } from "../tools/ls-tool.js";
 import { readExecutor, readTool } from "../tools/read-tool.js";
 
@@ -37,7 +38,9 @@ const toolDefs: AgentLoopOptions["toolDefs"] = {
 const toolExecutors: AgentLoopOptions["toolExecutors"] = {
   ls: lsExecutor,
   read: readExecutor,
-  translate: translateExecutor,
+  translate: createTranslateExecutor({
+    writer: translateState.write,
+  }),
   thinking: thinkingExecutor,
 };
 

@@ -40,52 +40,67 @@ export const translateTool = tool({
   outputSchema,
 });
 
-export const translateExecutor: ToolExecutor<
-  z.infer<typeof inputSchema>,
-  z.infer<typeof outputSchema>
-> = async (input, options, copilotResponse) => {
-  // check length
-  if (input.src_string.length > 300) {
+export type TranslateWriter = (params: {
+  translated_string: string;
+  file_id: string;
+}) => Promise<void>;
+
+export const createTranslateExecutor = ({
+  writer,
+}: {
+  writer: TranslateWriter;
+}): ToolExecutor<z.infer<typeof inputSchema>, z.infer<typeof outputSchema>> => {
+  return async (input, options, copilotResponse) => {
+    // check length
+    if (input.src_string.length > 300) {
+      return {
+        type: "tool-result",
+        payload: {
+          translated_string: "",
+          status: "reject",
+          reason: "Source string exceeds maximum length of 300 characters",
+        },
+      };
+    }
+
+    const copilotReq = {
+      tool: {
+        name: options.name,
+        callId: options.callId,
+      },
+      ...input,
+    };
+
+    if (!copilotResponse) {
+      return {
+        type: "copilot-request",
+        payload: copilotReq,
+      };
+    }
+
+    const { translated_string, status, reason } = copilotResponse;
+
+    if (status !== "approve" && options.memory) {
+      await options.memory.extractMemory({
+        req: copilotReq,
+        res: copilotResponse,
+      });
+    }
+
+    if (status === "approve" || status === "refined") {
+      await writer({
+        translated_string,
+        file_id: input.file_id,
+      });
+    }
+
     return {
       type: "tool-result",
       payload: {
-        translated_string: "",
-        status: "reject",
-        reason: "Source string exceeds maximum length of 300 characters",
+        translated_string,
+        status,
+        reason,
       },
     };
-  }
-
-  const copilotReq = {
-    tool: {
-      name: options.name,
-      callId: options.callId,
-    },
-    ...input,
-  };
-
-  if (!copilotResponse) {
-    return {
-      type: "copilot-request",
-      payload: copilotReq,
-    };
-  }
-
-  const { translated_string, status, reason } = copilotResponse;
-
-  if (status !== "approve" && options.memory) {
-    await options.memory.extractMemory({
-      req: copilotReq,
-      res: copilotResponse,
-    });
-  }
-
-  return {
-    type: "tool-result",
-    payload: {
-      translated_string,
-      status,
-      reason,
-    },
   };
 };
