@@ -8,7 +8,7 @@ const openrouter = createOpenAICompatible({
 });
 
 export const models = {
-  translator: openrouter("google/gemini-2.5-flash"),
+  translator: openrouter("z-ai/glm-4.7"),
   memory: openrouter("google/gemini-2.5-flash-lite"),
   compactor: openrouter("google/gemini-2.5-flash-lite"),
 };

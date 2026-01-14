@@ -1,4 +1,5 @@
 import type { JSONValue, ToolSet } from "ai";
+import { FsDeps as SkillFsDeps } from "skills";
 import type { Memory } from "./memory.js";
 
 export {
@@ -16,6 +17,7 @@ export type AgentLoopOptions = {
   memory?: Memory;
   toolDefs?: ToolSet;
   toolExecutors?: Record<string, ToolExecutor>;
+  skillsPrompt?: string;
 };
 
 export type ToolCallOptions = {

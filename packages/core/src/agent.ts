@@ -149,6 +149,7 @@ export class AgentLoop {
     const { response, toolCalls, finishReason } = await generateText({
       system: SYSTEM_WORKFLOW({
         currentMemory: this.options.memory?.provideMemory() || "",
+        skillsPrompt: this.options.skillsPrompt || "",
       }),
       model: models.translator,
       messages: modelMessages,

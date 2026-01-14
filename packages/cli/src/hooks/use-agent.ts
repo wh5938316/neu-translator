@@ -1,3 +1,5 @@
+import { access, readdir, readFile } from "node:fs/promises";
+import { join } from "node:path";
 import {
   AgentLoop,
   type AgentLoopOptions,
@@ -6,6 +8,7 @@ import {
 } from "core";
 import { createRef, useCallback } from "react";
 import { useAgentStore } from "react-shared";
+import { Skills } from "skills";
 import {
   createTranslateExecutor,
   thinkingExecutor,
@@ -44,6 +47,29 @@ const toolExecutors: AgentLoopOptions["toolExecutors"] = {
   thinking: thinkingExecutor,
 };
 
+const skills = new Skills({
+  join: join,
+  exists: (p: string) => {
+    return access(p)
+      .then(() => true)
+      .catch(() => false);
+  },
+  readFile: (p: string, encoding: string) => {
+    return readFile(p, {
+      encoding: encoding as BufferEncoding,
+    });
+  },
+});
+
+let skillDirs: string[] = [];
+try {
+  const skillsPath = join(process.cwd(), ".skills");
+  const entries = await readdir(skillsPath, { withFileTypes: true });
+  skillDirs = entries
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => join(skillsPath, entry.name));
+} catch {}
+
 export const useAgent = () => {
   const messages = useAgentStore((s) => s.messages);
   const setMessages = useAgentStore((s) => s.setMessages);
@@ -70,6 +96,7 @@ export const useAgent = () => {
         memory: memoryRef.current!,
         toolDefs,
         toolExecutors,
+        skillsPrompt: await skills.toPrompt(skillDirs),
       });
 
       process.addListener("SIGINT", () => {
